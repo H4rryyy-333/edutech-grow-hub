@@ -9,6 +9,7 @@ import Contact from "./pages/Contact";
 import TeacherLogin from "./pages/teacher/TeacherLogin";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import UploadProof from "./pages/teacher/UploadProof";
+import TutorStandPurchase from "./pages/teacher/TutorStandPurchase";
 import StudentLogin from "./pages/student/StudentLogin";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/teacher/login" element={<TeacherLogin />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route path="/teacher/upload-proof" element={<UploadProof />} />
+          <Route path="/teacher/purchase-tutor-stand" element={<TutorStandPurchase />} />
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
