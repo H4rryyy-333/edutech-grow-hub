@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, CreditCard, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import tutorStandImage from "@/assets/tutor-stand.jpg";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const TutorStandPurchase = () => {
   const navigate = useNavigate();
@@ -28,30 +35,78 @@ const TutorStandPurchase = () => {
     }
   }, []);
 
-  const handleRazorpayPayment = () => {
-    // Mock Razorpay integration
-    toast({
-      title: "Payment Initiated",
-      description: "Opening Razorpay checkout (demo mode)...",
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
     });
+  };
 
-    // Simulate payment success after 2 seconds
-    setTimeout(() => {
-      const mockOrderId = `order_${Date.now()}`;
-      const mockPaymentId = `pay_${Date.now()}`;
-      
-      localStorage.setItem("tutorStandPurchaseStatus", "pending");
-      localStorage.setItem("razorpayOrderId", mockOrderId);
-      localStorage.setItem("razorpayPaymentId", mockPaymentId);
-      localStorage.setItem("purchaseDate", new Date().toISOString());
-      
-      setPurchaseStatus("pending");
-      
+  const handleRazorpayPayment = async () => {
+    const res = await loadRazorpayScript();
+
+    if (!res) {
       toast({
-        title: "Payment Successful!",
-        description: "Your purchase is pending verification by admin.",
+        title: "Error",
+        description: "Razorpay SDK failed to load. Please check your connection.",
+        variant: "destructive",
       });
-    }, 2000);
+      return;
+    }
+
+    // Create order (normally done on backend)
+    const orderId = `order_${Date.now()}`;
+    const amount = 29900; // ₹299 in paise
+
+    const options = {
+      key: "rzp_test_YOUR_KEY_HERE", // Replace with your Razorpay test key
+      amount: amount,
+      currency: "INR",
+      name: "EDUTECH",
+      description: "Easy Mount Tutor Stand",
+      order_id: orderId,
+      handler: function (response: any) {
+        // Payment successful
+        const paymentId = response.razorpay_payment_id;
+        const orderId = response.razorpay_order_id;
+        const signature = response.razorpay_signature;
+
+        localStorage.setItem("tutorStandPurchaseStatus", "pending");
+        localStorage.setItem("razorpayOrderId", orderId);
+        localStorage.setItem("razorpayPaymentId", paymentId);
+        localStorage.setItem("purchaseDate", new Date().toISOString());
+
+        setPurchaseStatus("pending");
+
+        toast({
+          title: "Payment Successful!",
+          description: "Your purchase is pending verification by admin.",
+        });
+      },
+      prefill: {
+        name: "Teacher Name",
+        email: "teacher@example.com",
+        contact: "9999999999",
+      },
+      theme: {
+        color: "#0ea5e9",
+      },
+      modal: {
+        ondismiss: function () {
+          toast({
+            title: "Payment Cancelled",
+            description: "You cancelled the payment.",
+            variant: "destructive",
+          });
+        },
+      },
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
   };
 
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,11 +236,12 @@ const TutorStandPurchase = () => {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-muted rounded-lg flex items-center justify-center h-64">
-                  <div className="text-center text-muted-foreground">
-                    <Upload className="h-16 w-16 mx-auto mb-2" />
-                    <p>Product Image</p>
-                  </div>
+                <div className="bg-muted rounded-lg overflow-hidden">
+                  <img 
+                    src={tutorStandImage} 
+                    alt="Easy Mount Tutor Stand" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <div className="mb-4">
@@ -239,7 +295,7 @@ const TutorStandPurchase = () => {
                     Pay ₹299 via Razorpay
                   </Button>
                   <p className="text-xs text-muted-foreground text-center mt-3">
-                    (Demo mode - simulates payment)
+                    Secure payment powered by Razorpay
                   </p>
                 </CardContent>
               </Card>
